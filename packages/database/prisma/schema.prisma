@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubscriptionType {
+  PRODUCT
+  BRAND
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  KAKAO
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id                   String               @id @default(uuid())
+  email                String               @unique
+  passwordHash         String?              @map("password_hash")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+  notificationSettings NotificationSetting?
+  subscriptions        Subscription[]
+  notificationLogs     NotificationLog[]
+  pushSubscriptions    PushSubscription[]
+
+  @@map("users")
+}
+
+model NotificationSetting {
+  id           String   @id @default(uuid())
+  userId       String   @unique @map("user_id")
+  emailEnabled Boolean  @default(true) @map("email_enabled")
+  pushEnabled  Boolean  @default(false) @map("push_enabled")
+  kakaoEnabled Boolean  @default(false) @map("kakao_enabled")
+  kakaoPhone   String?  @map("kakao_phone")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_settings")
+}
+
+model Subscription {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  keyword   String
+  type      SubscriptionType
+  createdAt DateTime         @default(now()) @map("created_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, keyword, type])
+  @@map("subscriptions")
+}
+
+model Recall {
+  id               String            @id @default(uuid())
+  productName      String            @map("product_name")
+  company          String
+  reason           String            @db.Text
+  announcedAt      DateTime          @map("announced_at")
+  sourceUrl        String            @map("source_url")
+  rawData          Json              @map("raw_data")
+  externalId       String?           @unique @map("external_id")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  notificationLogs NotificationLog[]
+
+  @@map("recalls")
+}
+
+model NotificationLog {
+  id        String              @id @default(uuid())
+  userId    String              @map("user_id")
+  recallId  String              @map("recall_id")
+  channel   NotificationChannel
+  status    NotificationStatus  @default(PENDING)
+  sentAt    DateTime?           @map("sent_at")
+  errorMsg  String?             @map("error_msg")
+  createdAt DateTime            @default(now()) @map("created_at")
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recall    Recall              @relation(fields: [recallId], references: [id], onDelete: Cascade)
+
+  @@map("notification_logs")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
+}
