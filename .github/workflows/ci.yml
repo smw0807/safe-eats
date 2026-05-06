@@ -26,7 +26,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type check
+      - name: Prettier check
+        run: pnpm format:check
+
+      - name: Lint
         run: pnpm turbo lint
 
   build:

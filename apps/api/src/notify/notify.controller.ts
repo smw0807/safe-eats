@@ -19,18 +19,12 @@ export class NotifyController {
   }
 
   @Patch('notifications/settings')
-  updateSettings(
-    @CurrentUser() user: { id: string },
-    @Body() dto: UpdateNotificationSettingDto,
-  ) {
+  updateSettings(@CurrentUser() user: { id: string }, @Body() dto: UpdateNotificationSettingDto) {
     return this.notifyService.updateSettings(user.id, dto);
   }
 
   @Post('push/subscribe')
-  subscribePush(
-    @CurrentUser() user: { id: string },
-    @Body() dto: CreatePushSubscriptionDto,
-  ) {
+  subscribePush(@CurrentUser() user: { id: string }, @Body() dto: CreatePushSubscriptionDto) {
     return this.notifyService.subscribePush(user.id, dto);
   }
 }

@@ -34,15 +34,17 @@ export class RecallService {
     return recall;
   }
 
-  async saveRecalls(data: Array<{
-    externalId: string;
-    productName: string;
-    company: string;
-    reason: string;
-    announcedAt: Date;
-    sourceUrl: string;
-    rawData: object;
-  }>) {
+  async saveRecalls(
+    data: Array<{
+      externalId: string;
+      productName: string;
+      company: string;
+      reason: string;
+      announcedAt: Date;
+      sourceUrl: string;
+      rawData: object;
+    }>,
+  ) {
     const results = await Promise.allSettled(
       data.map((item) =>
         prisma.recall.upsert({

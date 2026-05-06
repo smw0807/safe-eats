@@ -29,7 +29,8 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user || !user.passwordHash) throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
+    if (!user || !user.passwordHash)
+      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');

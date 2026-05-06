@@ -1,7 +1,6 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { RecallService } from './recall.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
 @ApiTags('recalls')
 @Controller('recalls')
