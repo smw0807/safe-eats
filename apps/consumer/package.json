@@ -18,8 +18,8 @@
     "@safe-eats/config": "workspace:*",
     "@safe-eats/database": "workspace:*",
     "@safe-eats/dto": "workspace:*",
-    "amqplib": "^0.10.7",
     "amqp-connection-manager": "^4.1.14",
+    "amqplib": "^0.10.7",
     "nodemailer": "^6.10.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
@@ -32,6 +32,7 @@
     "@types/node": "^22.15.14",
     "@types/nodemailer": "^6.4.17",
     "@types/web-push": "^3.6.4",
+    "ts-loader": "^9.5.7",
     "typescript": "^5.8.3"
   }
 }
