@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { prisma } from '@safe-eats/database';
+import { prisma, Recall } from '@safe-eats/database';
 
 interface FindAllOptions {
   page: number;
@@ -7,9 +7,17 @@ interface FindAllOptions {
   keyword?: string;
 }
 
+interface FindAllResult {
+  recalls: Recall[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 @Injectable()
 export class RecallService {
-  async findAll({ page, limit, keyword }: FindAllOptions) {
+  async findAll({ page, limit, keyword }: FindAllOptions): Promise<FindAllResult> {
     const skip = (page - 1) * limit;
     const where = keyword
       ? {
@@ -28,7 +36,7 @@ export class RecallService {
     return { recalls, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<Recall> {
     const recall = await prisma.recall.findUnique({ where: { id } });
     if (!recall) throw new NotFoundException('리콜 정보를 찾을 수 없습니다.');
     return recall;
@@ -44,7 +52,7 @@ export class RecallService {
       sourceUrl: string;
       rawData: object;
     }>,
-  ) {
+  ): Promise<PromiseSettledResult<Recall>[]> {
     const results = await Promise.allSettled(
       data.map((item) =>
         prisma.recall.upsert({
