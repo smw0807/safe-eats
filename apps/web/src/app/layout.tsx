@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { AuthProvider } from '../contexts/auth-context';
+import Navbar from '../components/navbar';
 
 export const metadata: Metadata = {
   title: 'SafeEats - 식품 안전 리콜 모니터링',
@@ -9,7 +11,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className="min-h-screen bg-gray-50 font-sans antialiased">{children}</body>
+      <body className="min-h-screen bg-gray-50 font-sans antialiased">
+        <AuthProvider>
+          <Navbar />
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }
