@@ -29,8 +29,10 @@ export class MfdsScheduler {
         return;
       }
 
-      const url = `${MFDS_API_BASE}/${apiKey}/I0490/json/1/100`;
-      this.logger.log(`[POLL] 식약처 API 요청: ${MFDS_API_BASE}/[KEY]/I0490/json/1/100`);
+      // 당일 등록 데이터만 조회 (CRET_DTM 필터)
+      const today = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+      const url = `${MFDS_API_BASE}/${apiKey}/I0490/json/1/500/CRET_DTM=${today}`;
+      this.logger.log(`[POLL] 식약처 API 요청 (날짜: ${today})`);
 
       const response = await fetch(url);
       this.logger.log(`[POLL] HTTP 상태: ${response.status} ${response.statusText}`);
@@ -82,7 +84,13 @@ export class MfdsScheduler {
         .filter((r) => r.status === 'fulfilled')
         .map((r) => (r as PromiseFulfilledResult<any>).value);
 
-      this.logger.log(`[POLL] 저장 완료 — 성공: ${saved.length}건, 실패: ${failed.length}건`);
+      // 이번 폴링 시작 이후 신규 저장된 레코드만 알림 대상
+      const pollStartedAt = new Date(startedAt);
+      const newRecalls = saved.filter((r) => new Date(r.createdAt) >= pollStartedAt);
+
+      this.logger.log(
+        `[POLL] 저장 완료 — 성공: ${saved.length}건, 실패: ${failed.length}건, 신규: ${newRecalls.length}건`,
+      );
       if (failed.length > 0) {
         failed.forEach((r) =>
           this.logger.warn(`[POLL] 저장 실패: ${(r as PromiseRejectedResult).reason}`),
@@ -90,7 +98,7 @@ export class MfdsScheduler {
       }
 
       let totalNotified = 0;
-      for (const recall of saved) {
+      for (const recall of newRecalls) {
         const subs = await this.subscribeService.findMatchingUsers(
           recall.productName,
           recall.company,
