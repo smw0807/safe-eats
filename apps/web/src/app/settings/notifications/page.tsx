@@ -22,6 +22,7 @@ export default function NotificationSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [pushError, setPushError] = useState('');
 
   useEffect(() => {
     if (!isLoading && !token) {
@@ -41,14 +42,59 @@ export default function NotificationSettingsPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  const registerAndSubscribePush = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      throw new Error('이 브라우저는 웹 푸시를 지원하지 않습니다.');
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      throw new Error('알림 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.');
+    }
+
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    await navigator.serviceWorker.ready;
+
+    const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!vapidKey) throw new Error('VAPID 키가 설정되지 않았습니다.');
+
+    const sub = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: vapidKey,
+    });
+
+    const subJson = sub.toJSON();
+    await api.post(
+      '/push/subscribe',
+      {
+        endpoint: sub.endpoint,
+        p256dh: subJson.keys?.p256dh ?? '',
+        auth: subJson.keys?.auth ?? '',
+      },
+      token!,
+    );
+  };
+
   const toggle = async (field: 'emailEnabled' | 'pushEnabled' | 'kakaoEnabled') => {
     if (!token || !settings) return;
-    const updated = { ...settings, [field]: !settings[field] };
+    const newValue = !settings[field];
+
+    if (field === 'pushEnabled' && newValue) {
+      setPushError('');
+      try {
+        await registerAndSubscribePush();
+      } catch (err) {
+        setPushError(err instanceof Error ? err.message : '웹 푸시 구독에 실패했습니다.');
+        return;
+      }
+    }
+
+    const updated = { ...settings, [field]: newValue };
     setSettings(updated);
     try {
       const res = await api.patch<NotificationSettings>(
         '/notifications/settings',
-        { [field]: updated[field] },
+        { [field]: newValue },
         token,
       );
       setSettings(res);
@@ -149,9 +195,16 @@ export default function NotificationSettingsPage() {
         ))}
       </div>
 
+      {/* 웹 푸시 에러 */}
+      {pushError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+          {pushError}
+        </div>
+      )}
+
       {/* 카카오 전화번호 */}
       {settings.kakaoEnabled && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
           <h2 className="font-semibold mb-1 text-sm">카카오 알림톡 수신 번호</h2>
           <p className="text-xs text-gray-400 mb-3">
             카카오 비즈메시지를 수신할 휴대폰 번호를 입력하세요.
