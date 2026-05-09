@@ -7,5 +7,6 @@ import { MfdsScheduler } from './mfds.scheduler';
 @Module({
   imports: [RecallModule, SubscribeModule, NotifyModule],
   providers: [MfdsScheduler],
+  exports: [MfdsScheduler],
 })
 export class SchedulerModule {}
