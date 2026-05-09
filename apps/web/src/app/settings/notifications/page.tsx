@@ -1,21 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../contexts/auth-context';
+import { useRequireAuth } from '../../../hooks/useRequireAuth';
 import { api } from '../../../lib/api';
-
-interface NotificationSettings {
-  id: string;
-  emailEnabled: boolean;
-  pushEnabled: boolean;
-  kakaoEnabled: boolean;
-  kakaoPhone: string | null;
-}
+import Alert from '../../../components/ui/Alert';
+import type { NotificationSettings } from '../../../types';
 
 export default function NotificationSettingsPage() {
-  const { token, user, isLoading } = useAuth();
-  const router = useRouter();
+  const { token, user, isLoading } = useRequireAuth();
 
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [kakaoPhone, setKakaoPhone] = useState('');
@@ -23,12 +15,6 @@ export default function NotificationSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [pushError, setPushError] = useState('');
-
-  useEffect(() => {
-    if (!isLoading && !token) {
-      router.push('/login');
-    }
-  }, [token, isLoading, router]);
 
   useEffect(() => {
     if (!token) return;
@@ -195,12 +181,7 @@ export default function NotificationSettingsPage() {
         ))}
       </div>
 
-      {/* 웹 푸시 에러 */}
-      {pushError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
-          {pushError}
-        </div>
-      )}
+      {pushError && <Alert type="error" message={pushError} className="mb-4" />}
 
       {/* 카카오 전화번호 */}
       {settings.kakaoEnabled && (
@@ -228,12 +209,12 @@ export default function NotificationSettingsPage() {
         </div>
       )}
 
-      {/* 알림 없음 경고 */}
       {!settings.emailEnabled && !settings.pushEnabled && !settings.kakaoEnabled && (
-        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-700">
-          ⚠️ 모든 알림 채널이 비활성화되어 있습니다. 리콜 알림을 받으려면 하나 이상의 채널을
-          켜주세요.
-        </div>
+        <Alert
+          type="warning"
+          message="⚠️ 모든 알림 채널이 비활성화되어 있습니다. 리콜 알림을 받으려면 하나 이상의 채널을 켜주세요."
+          className="mt-4"
+        />
       )}
     </main>
   );

@@ -1,20 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/auth-context';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { api } from '../../lib/api';
-
-interface Subscription {
-  id: string;
-  keyword: string;
-  type: 'PRODUCT' | 'BRAND';
-  createdAt: string;
-}
+import Alert from '../../components/ui/Alert';
+import type { Subscription } from '../../types';
 
 export default function SubscribePage() {
-  const { token, isLoading } = useAuth();
-  const router = useRouter();
+  const { token, isLoading } = useRequireAuth();
 
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [keyword, setKeyword] = useState('');
@@ -23,12 +16,6 @@ export default function SubscribePage() {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isLoading && !token) {
-      router.push('/login');
-    }
-  }, [token, isLoading, router]);
 
   useEffect(() => {
     if (!token) return;
@@ -95,11 +82,7 @@ export default function SubscribePage() {
       {/* 추가 폼 */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <h2 className="font-semibold mb-4">키워드 추가</h2>
-        {error && (
-          <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-            {error}
-          </div>
-        )}
+        {error && <Alert type="error" message={error} className="mb-3" />}
         <form onSubmit={handleAdd} className="flex gap-2">
           <select
             value={type}

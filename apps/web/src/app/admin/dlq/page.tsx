@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../contexts/auth-context';
+import { useRequireAuth } from '../../../hooks/useRequireAuth';
 import { api } from '../../../lib/api';
+import Alert from '../../../components/ui/Alert';
 
 interface DlqMessage {
   id: string;
@@ -15,8 +15,7 @@ interface DlqMessage {
 }
 
 export default function AdminDlqPage() {
-  const { token, isLoading } = useAuth();
-  const router = useRouter();
+  const { token, isLoading } = useRequireAuth();
   const [messages, setMessages] = useState<DlqMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState<string | null>(null);
@@ -26,12 +25,6 @@ export default function AdminDlqPage() {
     message: string;
   } | null>(null);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!isLoading && !token) {
-      router.push('/login');
-    }
-  }, [token, isLoading, router]);
 
   useEffect(() => {
     if (!token) return;
@@ -108,22 +101,14 @@ export default function AdminDlqPage() {
       </div>
 
       {pollResult && (
-        <div
-          className={`mb-4 p-3 rounded-lg text-sm border ${
-            pollResult.type === 'success'
-              ? 'bg-blue-50 border-blue-200 text-blue-700'
-              : 'bg-red-50 border-red-200 text-red-600'
-          }`}
-        >
-          {pollResult.message}
-        </div>
+        <Alert
+          type={pollResult.type === 'success' ? 'success' : 'error'}
+          message={pollResult.message}
+          className="mb-4"
+        />
       )}
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <Alert type="error" message={error} className="mb-4" />}
 
       {messages.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-400 text-sm">

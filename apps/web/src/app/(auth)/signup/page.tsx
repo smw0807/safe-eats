@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../contexts/auth-context';
+import Alert from '../../../components/ui/Alert';
 
 export default function SignupPage() {
   const { signup } = useAuth();
@@ -44,11 +45,7 @@ export default function SignupPage() {
         <h1 className="text-2xl font-bold text-center mb-2">회원가입</h1>
         <p className="text-center text-gray-500 text-sm mb-6">식품 리콜 알림을 받아보세요</p>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-            {error}
-          </div>
-        )}
+        {error && <Alert type="error" message={error} className="mb-4" />}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>

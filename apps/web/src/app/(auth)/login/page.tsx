@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../contexts/auth-context';
+import Alert from '../../../components/ui/Alert';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -33,11 +34,7 @@ export default function LoginPage() {
         <h1 className="text-2xl font-bold text-center mb-2">로그인</h1>
         <p className="text-center text-gray-500 text-sm mb-6">SafeEats에 오신 걸 환영합니다</p>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-            {error}
-          </div>
-        )}
+        {error && <Alert type="error" message={error} className="mb-4" />}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>

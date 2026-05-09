@@ -1,47 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../../contexts/auth-context';
+import { useEffect, useState } from 'react';
+import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { api } from '../../lib/api';
-
-interface Recall {
-  id: string;
-  productName: string;
-  company: string;
-  reason: string;
-  announcedAt: string;
-  sourceUrl: string;
-}
-
-interface Subscription {
-  id: string;
-  keyword: string;
-  type: 'PRODUCT' | 'BRAND';
-  createdAt: string;
-}
-
-interface NotificationSettings {
-  emailEnabled: boolean;
-  pushEnabled: boolean;
-  kakaoEnabled: boolean;
-}
+import type { Recall, Subscription, NotificationSettings } from '../../types';
 
 export default function DashboardPage() {
-  const { token, user, isLoading } = useAuth();
-  const router = useRouter();
+  const { token, user, isLoading } = useRequireAuth();
 
   const [recalls, setRecalls] = useState<Recall[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
-
-  useEffect(() => {
-    if (!isLoading && !token) {
-      router.push('/login');
-    }
-  }, [token, isLoading, router]);
 
   useEffect(() => {
     if (!token) return;

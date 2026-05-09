@@ -2,30 +2,14 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
-
-interface Recall {
-  id: string;
-  productName: string;
-  company: string;
-  reason: string;
-  announcedAt: string;
-  sourceUrl: string;
-}
-
-interface RecallsResponse {
-  recalls: Recall[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+import { api } from '../../lib/api';
+import type { Recall, RecallsResponse } from '../../types';
 
 interface Props {
   initialData: RecallsResponse;
 }
 
 const LIMIT = 20;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export default function RecallsClient({ initialData }: Props) {
   const [recalls, setRecalls] = useState<Recall[]>(initialData.recalls);
@@ -41,8 +25,7 @@ export default function RecallsClient({ initialData }: Props) {
     try {
       const params = new URLSearchParams({ page: String(p), limit: String(LIMIT) });
       if (kw) params.set('keyword', kw);
-      const res = await fetch(`${API_URL}/recalls?${params}`);
-      const data: RecallsResponse = await res.json();
+      const data = await api.get<RecallsResponse>(`/recalls?${params}`);
       setRecalls(data.recalls);
       setTotal(data.total);
       setTotalPages(data.totalPages);
