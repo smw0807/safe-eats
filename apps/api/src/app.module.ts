@@ -6,6 +6,7 @@ import { RecallModule } from './recall/recall.module';
 import { SubscribeModule } from './subscribe/subscribe.module';
 import { NotifyModule } from './notify/notify.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
     SubscribeModule,
     NotifyModule,
     SchedulerModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
