@@ -66,14 +66,30 @@ model Subscription {
 
 model Recall {
   id               String            @id @default(uuid())
+  externalId       String?           @unique @map("external_id")
   productName      String            @map("product_name")
   company          String
   reason           String            @db.Text
   announcedAt      DateTime          @map("announced_at")
   sourceUrl        String            @map("source_url")
   rawData          Json              @map("raw_data")
-  externalId       String?           @unique @map("external_id")
   createdAt        DateTime          @default(now()) @map("created_at")
+
+  // 추가 필드
+  address         String?            @map("address")
+  telNo           String?            @map("tel_no")
+  barcodeNo       String?            @map("barcode_no")
+  packagingUnit   String?            @map("packaging_unit")
+  manufacturedAt  String?            @map("manufactured_at")
+  recallMethod    String?            @map("recall_method")
+  expiryDate      String?            @map("expiry_date")
+  productType     String?            @map("product_type")
+  productTypeName String?            @map("product_type_name")
+  imageUrls       String[]           @map("image_urls")
+  recallGrade     String?            @map("recall_grade")
+  productReportNo String?            @map("product_report_no")
+  licenseNo       String?            @map("license_no")
+
   notificationLogs NotificationLog[]
 
   @@map("recalls")
