@@ -20,6 +20,11 @@ export default function AdminDlqPage() {
   const [messages, setMessages] = useState<DlqMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [retrying, setRetrying] = useState<string | null>(null);
+  const [polling, setPolling] = useState(false);
+  const [pollResult, setPollResult] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -36,6 +41,23 @@ export default function AdminDlqPage() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [token]);
+
+  const handlePoll = async () => {
+    if (!token) return;
+    setPolling(true);
+    setPollResult(null);
+    try {
+      await api.post('/admin/scheduler/poll', {}, token);
+      setPollResult({ type: 'success', message: '폴링을 시작했습니다. 서버 로그를 확인하세요.' });
+    } catch (err) {
+      setPollResult({
+        type: 'error',
+        message: err instanceof Error ? err.message : '폴링 요청 실패',
+      });
+    } finally {
+      setPolling(false);
+    }
+  };
 
   const handleRetry = async (id: string) => {
     if (!token) return;
@@ -67,14 +89,35 @@ export default function AdminDlqPage() {
   return (
     <main className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-2xl font-bold">DLQ 관리</h1>
-          <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-medium rounded-full">
-            관리자
-          </span>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">DLQ 관리</h1>
+            <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+              관리자
+            </span>
+          </div>
+          <button
+            onClick={handlePoll}
+            disabled={polling}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40 transition"
+          >
+            {polling ? '폴링 중...' : '식약처 수동 폴링'}
+          </button>
         </div>
         <p className="text-gray-500 text-sm">발송에 실패한 알림 메시지를 확인하고 재시도합니다.</p>
       </div>
+
+      {pollResult && (
+        <div
+          className={`mb-4 p-3 rounded-lg text-sm border ${
+            pollResult.type === 'success'
+              ? 'bg-blue-50 border-blue-200 text-blue-700'
+              : 'bg-red-50 border-red-200 text-red-600'
+          }`}
+        >
+          {pollResult.message}
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
