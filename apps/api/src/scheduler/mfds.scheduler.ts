@@ -43,7 +43,7 @@ export class MfdsScheduler {
 
       const data = JSON.parse(rawText);
 
-      const items: Record<string, string>[] = data?.RECALL_BGYO_INFO?.row ?? [];
+      const items: Record<string, string>[] = data?.I0490?.row ?? [];
       this.logger.log(`[POLL] API 응답 ${items.length}건`);
 
       if (items.length === 0) {
@@ -52,13 +52,28 @@ export class MfdsScheduler {
       }
 
       const recalls = items.map((item) => ({
-        externalId: item.RECALL_CODE || item.PRDT_NM + item.RECALL_DE,
-        productName: item.PRDT_NM || '',
-        company: item.BSSH_NM || '',
-        reason: item.RECALL_RESN || '',
-        announcedAt: new Date(item.RECALL_DE || Date.now()),
+        externalId: item.RTRVLDSUSE_SEQ || item.PRDLST_REPORT_NO || item.PRDTNM + item.CRET_DTM,
+        productName: item.PRDTNM || '',
+        company: item.BSSHNM || '',
+        reason: item.RTRVLPRVNS || '',
+        announcedAt: item.CRET_DTM ? new Date(item.CRET_DTM.replace(' ', 'T')) : new Date(),
         sourceUrl: `https://www.foodsafetykorea.go.kr`,
         rawData: item,
+        address: item.ADDR || null,
+        telNo: item.TELNO || null,
+        barcodeNo: item.BRCDNO || null,
+        packagingUnit: item.FRMLCUNIT || null,
+        manufacturedAt: item.MNFDT !== '데이터없음' ? item.MNFDT || null : null,
+        recallMethod: item.RTRVLPLANDOC_RTRVLMTHD || null,
+        expiryDate: item.DISTBTMLMT || null,
+        productType: item.PRDLST_TYPE || null,
+        productTypeName: item.PRDLST_CD_NM || null,
+        imageUrls: item.IMG_FILE_PATH
+          ? item.IMG_FILE_PATH.split(',').map((u: string) => u.trim()).filter(Boolean)
+          : [],
+        recallGrade: item.RTRVL_GRDCD_NM || null,
+        productReportNo: item.PRDLST_REPORT_NO || null,
+        licenseNo: item.LCNS_NO || null,
       }));
 
       const results = await this.recallService.saveRecalls(recalls);

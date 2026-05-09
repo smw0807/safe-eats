@@ -6,6 +6,19 @@ export interface Recall {
   announcedAt: string;
   sourceUrl: string;
   createdAt?: string;
+  address?: string | null;
+  telNo?: string | null;
+  barcodeNo?: string | null;
+  packagingUnit?: string | null;
+  manufacturedAt?: string | null;
+  recallMethod?: string | null;
+  expiryDate?: string | null;
+  productType?: string | null;
+  productTypeName?: string | null;
+  imageUrls?: string[];
+  recallGrade?: string | null;
+  productReportNo?: string | null;
+  licenseNo?: string | null;
 }
 
 export interface RecallsResponse {

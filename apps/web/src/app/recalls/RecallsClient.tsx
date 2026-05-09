@@ -107,11 +107,21 @@ export default function RecallsClient({ initialData }: Props) {
               }`}
             >
               <div className="flex-1 min-w-0 pr-4">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className="font-medium text-sm">{recall.productName}</span>
                   <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
                     {recall.company}
                   </span>
+                  {recall.productType && (
+                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                      {recall.productType}
+                    </span>
+                  )}
+                  {recall.recallGrade && (
+                    <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+                      {recall.recallGrade}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-gray-500 line-clamp-2">{recall.reason}</p>
               </div>
