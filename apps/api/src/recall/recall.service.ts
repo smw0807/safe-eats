@@ -21,11 +21,12 @@ export class RecallService {
     const skip = (page - 1) * limit;
     const where = keyword
       ? {
-          OR: [
-            { productName: { contains: keyword, mode: 'insensitive' as const } },
-            { company: { contains: keyword, mode: 'insensitive' as const } },
-          ],
-        }
+        OR: [
+          { productName: { contains: keyword, mode: 'insensitive' as const } },
+          { company: { contains: keyword, mode: 'insensitive' as const } },
+          { reason: { contains: keyword, mode: 'insensitive' as const } },
+        ],
+      }
       : {};
 
     const [recalls, total] = await Promise.all([
