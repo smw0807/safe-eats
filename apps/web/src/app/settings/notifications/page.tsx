@@ -6,6 +6,13 @@ import { api } from '../../../lib/api';
 import Alert from '../../../components/ui/Alert';
 import type { NotificationSettings } from '../../../types';
 
+function formatPhone(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -41,7 +48,7 @@ export default function NotificationSettingsPage() {
       .get<NotificationSettings>('/notifications/settings', token)
       .then((s) => {
         setSettings(s);
-        setKakaoPhone(s.kakaoPhone || '');
+        setKakaoPhone(s.kakaoPhone ? formatPhone(s.kakaoPhone) : '');
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -174,7 +181,7 @@ export default function NotificationSettingsPage() {
     try {
       const res = await api.patch<NotificationSettings>(
         '/notifications/settings',
-        { kakaoPhone: kakaoPhone.trim() || null },
+        { kakaoPhone: kakaoPhone.replace(/-/g, '') || null },
         token,
       );
       setSettings(res);
@@ -332,7 +339,7 @@ export default function NotificationSettingsPage() {
             <input
               type="tel"
               value={kakaoPhone}
-              onChange={(e) => setKakaoPhone(e.target.value)}
+              onChange={(e) => setKakaoPhone(formatPhone(e.target.value))}
               placeholder="010-0000-0000"
               className="flex-1 border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
             />
