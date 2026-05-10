@@ -127,7 +127,16 @@ export default function NotificationSettingsPage() {
     try {
       await api.post('/push/test', {}, token);
       setTestOk(true);
-      setTestMessage('발송 성공! 브라우저 알림을 확인하세요.');
+      setTestMessage('발송 성공!');
+      window.dispatchEvent(
+        new CustomEvent('safeeats:push', {
+          detail: {
+            title: '[SafeEats] 테스트 알림',
+            body: '웹 푸시 알림이 정상적으로 작동합니다!',
+            url: '/recalls',
+          },
+        }),
+      );
     } catch (err) {
       setTestOk(false);
       setTestMessage(err instanceof Error ? err.message : '발송 실패');

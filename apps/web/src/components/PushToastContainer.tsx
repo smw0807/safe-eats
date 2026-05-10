@@ -10,6 +10,12 @@ interface Toast {
   url: string;
 }
 
+interface PushPayload {
+  title: string;
+  body: string;
+  url: string;
+}
+
 export default function PushToastContainer() {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -18,29 +24,39 @@ export default function PushToastContainer() {
   }, []);
 
   const addToast = useCallback(
-    (toast: Omit<Toast, 'id'>) => {
+    (payload: PushPayload) => {
       const id = Math.random().toString(36).slice(2);
-      setToasts((prev) => [...prev, { ...toast, id }]);
+      setToasts((prev) => [...prev, { ...payload, id }]);
       setTimeout(() => dismiss(id), 6000);
     },
     [dismiss],
   );
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) return;
+    // SW postMessage 수신 (실제 push 알림)
+    if ('serviceWorker' in navigator) {
+      const swHandler = (event: MessageEvent) => {
+        if (event.data?.type === 'PUSH_NOTIFICATION') {
+          addToast({
+            title: event.data.title,
+            body: event.data.body,
+            url: event.data.url ?? '/recalls',
+          });
+        }
+      };
+      navigator.serviceWorker.addEventListener('message', swHandler);
+      return () => navigator.serviceWorker.removeEventListener('message', swHandler);
+    }
+  }, [addToast]);
 
-    const handler = (event: MessageEvent) => {
-      if (event.data?.type === 'PUSH_NOTIFICATION') {
-        addToast({
-          title: event.data.title,
-          body: event.data.body,
-          url: event.data.url ?? '/recalls',
-        });
-      }
+  useEffect(() => {
+    // CustomEvent 수신 (테스트 버튼 직접 트리거)
+    const eventHandler = (e: Event) => {
+      const { title, body, url } = (e as CustomEvent<PushPayload>).detail;
+      addToast({ title, body, url });
     };
-
-    navigator.serviceWorker.addEventListener('message', handler);
-    return () => navigator.serviceWorker.removeEventListener('message', handler);
+    window.addEventListener('safeeats:push', eventHandler);
+    return () => window.removeEventListener('safeeats:push', eventHandler);
   }, [addToast]);
 
   if (toasts.length === 0) return null;

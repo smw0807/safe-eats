@@ -1,3 +1,11 @@
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
 self.addEventListener('push', (event) => {
   console.log('[SW] push 이벤트 수신', event);
   let data = {};
@@ -11,7 +19,6 @@ self.addEventListener('push', (event) => {
   const body = data.body || '새로운 식품 리콜 알림이 있습니다.';
   const url = data.url || '/recalls';
 
-  // 열린 탭에 인앱 토스트용 메시지 전달
   const notifyClients = self.clients
     .matchAll({ type: 'window', includeUncontrolled: true })
     .then((clientList) => {
