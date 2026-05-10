@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '../contexts/auth-context';
 import Navbar from '../components/navbar';
+import PushToastContainer from '../components/PushToastContainer';
 
 export const metadata: Metadata = {
   title: 'SafeEats - 식품 안전 리콜 모니터링',
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <Navbar />
           {children}
+          <PushToastContainer />
         </AuthProvider>
       </body>
     </html>
