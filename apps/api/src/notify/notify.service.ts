@@ -6,6 +6,12 @@ import { RecallNotifyEvent } from '@safe-eats/dto';
 import { UpdateNotificationSettingDto } from './dto/update-notification-setting.dto';
 import { CreatePushSubscriptionDto } from './dto/create-push-subscription.dto';
 
+interface WebPushError {
+  statusCode?: number;
+  body?: string;
+  message?: string;
+}
+
 @Injectable()
 export class NotifyService implements OnModuleInit {
   private readonly logger = new Logger(NotifyService.name);
@@ -38,7 +44,7 @@ export class NotifyService implements OnModuleInit {
       update: { p256dh: dto.p256dh, auth: dto.auth },
       create: { userId, ...dto },
     });
-    this.logger.log(`[PUSH] 구독 저장 완료: userId=${userId}, endpoint=${dto.endpoint.slice(0, 60)}...`);
+    this.logger.log(`[PUSH] 구독 저장 완료: userId=${userId}`);
     return result;
   }
 
@@ -57,36 +63,35 @@ export class NotifyService implements OnModuleInit {
       );
     }
 
-    const results = await Promise.allSettled(
-      subs.map(async (sub) => {
-        try {
-          const res = await webpush.sendNotification(
-            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            JSON.stringify({
-              title: '[SafeEats] 테스트 알림',
-              body: '웹 푸시 알림이 정상적으로 작동합니다!',
-              url: '/recalls',
-            }),
-          );
-          this.logger.log(`[PUSH TEST] 발송 성공: statusCode=${res.statusCode}`);
-          return res;
-        } catch (err) {
-          const e = err as { statusCode?: number; body?: string; message?: string };
-          this.logger.error(
-            `[PUSH TEST] 발송 실패: statusCode=${e.statusCode}, body=${e.body ?? e.message}`,
-          );
-          throw new Error(`push failed: ${e.statusCode} - ${e.body ?? e.message}`);
+    let successCount = 0;
+    for (const sub of subs) {
+      try {
+        const res = await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          JSON.stringify({
+            title: '[SafeEats] 테스트 알림',
+            body: '웹 푸시 알림이 정상적으로 작동합니다!',
+            url: '/recalls',
+          }),
+        );
+        this.logger.log(`[PUSH TEST] 발송 성공: statusCode=${res.statusCode}`);
+        successCount++;
+      } catch (err) {
+        const e = err as WebPushError;
+        this.logger.error(`[PUSH TEST] 발송 실패: statusCode=${e.statusCode}, body=${e.body ?? e.message}`);
+        // 만료되거나 해제된 구독은 DB에서 삭제
+        if (e.statusCode === 410 || e.statusCode === 404) {
+          await prisma.pushSubscription.deleteMany({ where: { endpoint: sub.endpoint } });
+          this.logger.log(`[PUSH TEST] 만료 구독 삭제: ${sub.endpoint.slice(0, 60)}...`);
         }
-      }),
-    );
-
-    const failed = results.filter((r) => r.status === 'rejected');
-    if (failed.length > 0) {
-      const reason = (failed[0] as PromiseRejectedResult).reason as Error;
-      throw new Error(reason.message);
+      }
     }
 
-    return { success: true, count: subs.length };
+    if (successCount === 0) {
+      throw new Error('유효한 구독이 없습니다. 웹 푸시를 OFF 후 다시 ON 해주세요.');
+    }
+
+    return { success: true, count: successCount };
   }
 
   async publishRecallEvents(events: RecallNotifyEvent[]) {

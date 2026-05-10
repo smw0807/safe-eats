@@ -20,16 +20,28 @@ export class PushConsumer {
         where: { userId: event.userId },
       });
 
-      await Promise.all(
-        pushSubs.map((sub) => this.pushService.sendPushNotification(sub, event.recall)),
-      );
+      let successCount = 0;
+      for (const sub of pushSubs) {
+        try {
+          await this.pushService.sendPushNotification(sub, event.recall);
+          successCount++;
+        } catch (err) {
+          const e = err as { statusCode?: number };
+          this.logger.warn(`[PUSH] 발송 실패: statusCode=${e.statusCode}, endpoint=${sub.endpoint.slice(0, 60)}...`);
+          // 만료되거나 해제된 구독 자동 삭제
+          if (e.statusCode === 410 || e.statusCode === 404) {
+            await prisma.pushSubscription.deleteMany({ where: { endpoint: sub.endpoint } });
+            this.logger.log(`[PUSH] 만료 구독 삭제: ${sub.endpoint.slice(0, 60)}...`);
+          }
+        }
+      }
 
       await prisma.notificationLog.create({
         data: {
           userId: event.userId,
           recallId: event.recall.id,
           channel: 'PUSH',
-          status: 'SENT',
+          status: successCount > 0 ? 'SENT' : 'FAILED',
           sentAt: new Date(),
         },
       });
