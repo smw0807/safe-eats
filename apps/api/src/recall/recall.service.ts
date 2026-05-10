@@ -1,6 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { prisma, Recall } from '@safe-eats/database';
 
+export interface RecallItemData {
+  externalId: string;
+  productName: string;
+  company: string;
+  reason: string;
+  announcedAt: Date;
+  sourceUrl: string;
+  rawData: object;
+  address?: string | null;
+  telNo?: string | null;
+  barcodeNo?: string | null;
+  packagingUnit?: string | null;
+  manufacturedAt?: string | null;
+  recallMethod?: string | null;
+  expiryDate?: string | null;
+  productType?: string | null;
+  productTypeName?: string | null;
+  imageUrls?: string[];
+  recallGrade?: string | null;
+  productReportNo?: string | null;
+  licenseNo?: string | null;
+}
+
 interface FindAllOptions {
   page: number;
   limit: number;
@@ -21,12 +44,12 @@ export class RecallService {
     const skip = (page - 1) * limit;
     const where = keyword
       ? {
-        OR: [
-          { productName: { contains: keyword, mode: 'insensitive' as const } },
-          { company: { contains: keyword, mode: 'insensitive' as const } },
-          { reason: { contains: keyword, mode: 'insensitive' as const } },
-        ],
-      }
+          OR: [
+            { productName: { contains: keyword, mode: 'insensitive' as const } },
+            { company: { contains: keyword, mode: 'insensitive' as const } },
+            { reason: { contains: keyword, mode: 'insensitive' as const } },
+          ],
+        }
       : {};
 
     const [recalls, total] = await Promise.all([
@@ -43,31 +66,8 @@ export class RecallService {
     return recall;
   }
 
-  async saveRecalls(
-    data: Array<{
-      externalId: string;
-      productName: string;
-      company: string;
-      reason: string;
-      announcedAt: Date;
-      sourceUrl: string;
-      rawData: object;
-      address?: string | null;
-      telNo?: string | null;
-      barcodeNo?: string | null;
-      packagingUnit?: string | null;
-      manufacturedAt?: string | null;
-      recallMethod?: string | null;
-      expiryDate?: string | null;
-      productType?: string | null;
-      productTypeName?: string | null;
-      imageUrls?: string[];
-      recallGrade?: string | null;
-      productReportNo?: string | null;
-      licenseNo?: string | null;
-    }>,
-  ): Promise<PromiseSettledResult<Recall>[]> {
-    const results = await Promise.allSettled(
+  async saveRecalls(data: RecallItemData[]): Promise<PromiseSettledResult<Recall>[]> {
+    return Promise.allSettled(
       data.map((item) =>
         prisma.recall.upsert({
           where: { externalId: item.externalId },
@@ -76,6 +76,5 @@ export class RecallService {
         }),
       ),
     );
-    return results;
   }
 }
