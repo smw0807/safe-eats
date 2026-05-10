@@ -41,6 +41,9 @@ export default function NotificationSettingsPage() {
   const [emailTestSending, setEmailTestSending] = useState(false);
   const [emailTestMessage, setEmailTestMessage] = useState('');
   const [emailTestOk, setEmailTestOk] = useState<boolean | null>(null);
+  const [kakaoTestSending, setKakaoTestSending] = useState(false);
+  const [kakaoTestMessage, setKakaoTestMessage] = useState('');
+  const [kakaoTestOk, setKakaoTestOk] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -171,6 +174,24 @@ export default function NotificationSettingsPage() {
     } finally {
       setEmailTestSending(false);
       setTimeout(() => setEmailTestOk(null), 6000);
+    }
+  };
+
+  const sendTestKakao = async () => {
+    if (!token) return;
+    setKakaoTestSending(true);
+    setKakaoTestMessage('');
+    setKakaoTestOk(null);
+    try {
+      const res = await api.post<{ to: string }>('/kakao/test', {}, token);
+      setKakaoTestOk(true);
+      setKakaoTestMessage(`${res.to} 로 발송됐습니다.`);
+    } catch (err) {
+      setKakaoTestOk(false);
+      setKakaoTestMessage(err instanceof Error ? err.message : '발송 실패');
+    } finally {
+      setKakaoTestSending(false);
+      setTimeout(() => setKakaoTestOk(null), 6000);
     }
   };
 
@@ -335,7 +356,7 @@ export default function NotificationSettingsPage() {
           <p className="text-xs text-gray-400 mb-3">
             카카오 비즈메시지를 수신할 휴대폰 번호를 입력하세요.
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-4">
             <input
               type="tel"
               value={kakaoPhone}
@@ -351,6 +372,27 @@ export default function NotificationSettingsPage() {
               {saving ? '저장 중...' : saved ? '저장됨 ✓' : '저장'}
             </button>
           </div>
+          {settings.kakaoPhone && (
+            <>
+              <h2 className="font-semibold mb-1 text-sm">카카오 알림톡 테스트</h2>
+              <p className="text-xs text-gray-400 mb-3">등록된 번호로 테스트 알림을 발송합니다.</p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <button
+                  onClick={sendTestKakao}
+                  disabled={kakaoTestSending}
+                  className="px-4 py-2 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 disabled:opacity-50 text-sm font-medium transition"
+                >
+                  {kakaoTestSending ? '발송 중...' : '테스트 알림톡 보내기'}
+                </button>
+                {kakaoTestOk === true && (
+                  <span className="text-sm text-green-600">{kakaoTestMessage}</span>
+                )}
+                {kakaoTestOk === false && (
+                  <span className="text-sm text-red-500">{kakaoTestMessage}</span>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
 

@@ -104,6 +104,43 @@ export class NotifyService implements OnModuleInit {
     });
   }
 
+  async sendTestKakao(userId: string) {
+    const settings = await prisma.notificationSetting.findUnique({ where: { userId } });
+    if (!settings?.kakaoPhone) {
+      throw new NotFoundException('카카오 알림톡 수신 번호가 등록되지 않았습니다.');
+    }
+
+    const apiKey = process.env.KAKAO_API_KEY;
+    if (!apiKey) throw new Error('KAKAO_API_KEY가 설정되지 않았습니다.');
+
+    const response = await fetch('https://bizmessage.kakao.com/v2/api/talk/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `KakaoAK ${apiKey}`,
+      },
+      body: JSON.stringify({
+        receiver_uids: [settings.kakaoPhone],
+        template_code: 'RECALL_ALERT',
+        template_args: {
+          product_name: '[SafeEats] 테스트',
+          company: 'SafeEats',
+          reason: '카카오 알림톡 테스트 메시지입니다.',
+          source_url: 'https://www.foodsafetykorea.go.kr',
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      this.logger.error(`[KAKAO TEST] 발송 실패: ${response.status} ${body}`);
+      throw new Error(`카카오 API 오류: ${response.status}`);
+    }
+
+    this.logger.log(`[KAKAO TEST] 발송 완료: ${settings.kakaoPhone}`);
+    return { success: true, to: settings.kakaoPhone };
+  }
+
   async sendTestEmail(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user?.email) throw new NotFoundException('사용자 이메일을 찾을 수 없습니다.');

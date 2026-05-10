@@ -47,4 +47,11 @@ export class NotifyController {
   sendTestEmail(@CurrentUser() user: { id: string }) {
     return this.notifyService.sendTestEmail(user.id);
   }
+
+  @Post('kakao/test')
+  @HttpCode(200)
+  @ApiOperation({ summary: '카카오 알림톡 테스트 발송' })
+  sendTestKakao(@CurrentUser() user: { id: string }) {
+    return this.notifyService.sendTestKakao(user.id);
+  }
 }
