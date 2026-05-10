@@ -1,11 +1,18 @@
 self.addEventListener('push', (event) => {
-  const data = event.data?.json() ?? {};
+  console.log('[SW] push 이벤트 수신', event);
+  let data = {};
+  try {
+    data = event.data?.json() ?? {};
+  } catch (e) {
+    console.error('[SW] push 데이터 파싱 실패', e);
+  }
   const title = data.title || 'SafeEats 리콜 알림';
   const options = {
     body: data.body || '새로운 식품 리콜 알림이 있습니다.',
     icon: '/favicon.ico',
     data: { url: data.url || '/recalls' },
   };
+  console.log('[SW] showNotification:', title, options);
   event.waitUntil(self.registration.showNotification(title, options));
 });
 

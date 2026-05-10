@@ -28,7 +28,9 @@ export default function NotificationSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [pushError, setPushError] = useState('');
   const [testSending, setTestSending] = useState(false);
-  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
+  const [testMessage, setTestMessage] = useState('');
+  const [testOk, setTestOk] = useState<boolean | null>(null);
+  const [subCount, setSubCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -41,6 +43,15 @@ export default function NotificationSettingsPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [token]);
+
+  // 구독 상태 확인
+  useEffect(() => {
+    if (!token || !settings?.pushEnabled) return;
+    api
+      .get<{ count: number }>('/push/status', token)
+      .then((r) => setSubCount(r.count))
+      .catch(() => setSubCount(0));
+  }, [token, settings?.pushEnabled]);
 
   const registerAndSubscribePush = async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -58,6 +69,10 @@ export default function NotificationSettingsPage() {
     const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     if (!vapidKey) throw new Error('VAPID 키가 설정되지 않았습니다.');
 
+    // 기존 구독이 있으면 해제 후 재구독 (키 변경 대응)
+    const existing = await registration.pushManager.getSubscription();
+    if (existing) await existing.unsubscribe();
+
     const sub = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidKey),
@@ -73,6 +88,7 @@ export default function NotificationSettingsPage() {
       },
       token!,
     );
+    setSubCount(1);
   };
 
   const toggle = async (field: 'emailEnabled' | 'pushEnabled' | 'kakaoEnabled') => {
@@ -106,15 +122,18 @@ export default function NotificationSettingsPage() {
   const sendTestPush = async () => {
     if (!token) return;
     setTestSending(true);
-    setTestResult(null);
+    setTestMessage('');
+    setTestOk(null);
     try {
       await api.post('/push/test', {}, token);
-      setTestResult('success');
-    } catch {
-      setTestResult('error');
+      setTestOk(true);
+      setTestMessage('발송 성공! 브라우저 알림을 확인하세요.');
+    } catch (err) {
+      setTestOk(false);
+      setTestMessage(err instanceof Error ? err.message : '발송 실패');
     } finally {
       setTestSending(false);
-      setTimeout(() => setTestResult(null), 4000);
+      setTimeout(() => setTestOk(null), 6000);
     }
   };
 
@@ -215,11 +234,22 @@ export default function NotificationSettingsPage() {
       {/* 웹 푸시 테스트 */}
       {settings.pushEnabled && (
         <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-          <h2 className="font-semibold mb-1 text-sm">웹 푸시 테스트</h2>
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="font-semibold text-sm">웹 푸시 테스트</h2>
+            {subCount !== null && (
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full ${
+                  subCount > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'
+                }`}
+              >
+                {subCount > 0 ? `구독 ${subCount}개 등록됨` : '구독 없음'}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-gray-400 mb-3">
             실제 푸시 알림이 정상적으로 수신되는지 확인합니다.
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <button
               onClick={sendTestPush}
               disabled={testSending}
@@ -227,17 +257,14 @@ export default function NotificationSettingsPage() {
             >
               {testSending ? '발송 중...' : '테스트 알림 보내기'}
             </button>
-            {testResult === 'success' && (
-              <span className="text-sm text-green-600">
-                알림을 발송했습니다. 브라우저를 확인하세요.
-              </span>
-            )}
-            {testResult === 'error' && (
-              <span className="text-sm text-red-500">
-                발송에 실패했습니다. 구독 정보를 다시 확인하세요.
-              </span>
-            )}
+            {testOk === true && <span className="text-sm text-green-600">{testMessage}</span>}
+            {testOk === false && <span className="text-sm text-red-500">{testMessage}</span>}
           </div>
+          {subCount === 0 && (
+            <p className="text-xs text-orange-500 mt-2">
+              구독 정보가 없습니다. 웹 푸시 알림을 OFF 후 다시 ON 해주세요.
+            </p>
+          )}
         </div>
       )}
 

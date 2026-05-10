@@ -28,6 +28,12 @@ export class NotifyController {
     return this.notifyService.subscribePush(user.id, dto);
   }
 
+  @Get('push/status')
+  @ApiOperation({ summary: '웹 푸시 구독 상태 확인' })
+  getPushStatus(@CurrentUser() user: { id: string }) {
+    return this.notifyService.getPushStatus(user.id);
+  }
+
   @Post('push/test')
   @HttpCode(200)
   @ApiOperation({ summary: '웹 푸시 테스트 알림 발송' })
