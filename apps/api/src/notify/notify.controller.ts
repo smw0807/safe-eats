@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotifyService } from './notify.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -26,5 +26,12 @@ export class NotifyController {
   @Post('push/subscribe')
   subscribePush(@CurrentUser() user: { id: string }, @Body() dto: CreatePushSubscriptionDto) {
     return this.notifyService.subscribePush(user.id, dto);
+  }
+
+  @Post('push/test')
+  @HttpCode(200)
+  @ApiOperation({ summary: '웹 푸시 테스트 알림 발송' })
+  sendTestPush(@CurrentUser() user: { id: string }) {
+    return this.notifyService.sendTestPush(user.id);
   }
 }

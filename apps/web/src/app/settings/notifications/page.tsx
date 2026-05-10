@@ -15,6 +15,8 @@ export default function NotificationSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [pushError, setPushError] = useState('');
+  const [testSending, setTestSending] = useState(false);
+  const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -86,6 +88,21 @@ export default function NotificationSettingsPage() {
       setSettings(res);
     } catch {
       setSettings(settings);
+    }
+  };
+
+  const sendTestPush = async () => {
+    if (!token) return;
+    setTestSending(true);
+    setTestResult(null);
+    try {
+      await api.post('/push/test', {}, token);
+      setTestResult('success');
+    } catch {
+      setTestResult('error');
+    } finally {
+      setTestSending(false);
+      setTimeout(() => setTestResult(null), 4000);
     }
   };
 
@@ -182,6 +199,35 @@ export default function NotificationSettingsPage() {
       </div>
 
       {pushError && <Alert type="error" message={pushError} className="mb-4" />}
+
+      {/* 웹 푸시 테스트 */}
+      {settings.pushEnabled && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+          <h2 className="font-semibold mb-1 text-sm">웹 푸시 테스트</h2>
+          <p className="text-xs text-gray-400 mb-3">
+            실제 푸시 알림이 정상적으로 수신되는지 확인합니다.
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={sendTestPush}
+              disabled={testSending}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium transition"
+            >
+              {testSending ? '발송 중...' : '테스트 알림 보내기'}
+            </button>
+            {testResult === 'success' && (
+              <span className="text-sm text-green-600">
+                알림을 발송했습니다. 브라우저를 확인하세요.
+              </span>
+            )}
+            {testResult === 'error' && (
+              <span className="text-sm text-red-500">
+                발송에 실패했습니다. 구독 정보를 다시 확인하세요.
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 카카오 전화번호 */}
       {settings.kakaoEnabled && (

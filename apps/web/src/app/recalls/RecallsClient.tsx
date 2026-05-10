@@ -23,13 +23,16 @@ export default function RecallsClient({ initialData, initialKeyword }: Props) {
   const [search, setSearch] = useState(initialKeyword);
   const [loading, setLoading] = useState(false);
 
-  const updateUrl = useCallback((p: number, kw: string) => {
-    const params = new URLSearchParams();
-    if (p > 1) params.set('page', String(p));
-    if (kw) params.set('keyword', kw);
-    const query = params.toString();
-    router.replace(`/recalls${query ? `?${query}` : ''}`, { scroll: false });
-  }, [router]);
+  const updateUrl = useCallback(
+    (p: number, kw: string) => {
+      const params = new URLSearchParams();
+      if (p > 1) params.set('page', String(p));
+      if (kw) params.set('keyword', kw);
+      const query = params.toString();
+      router.replace(`/recalls${query ? `?${query}` : ''}`, { scroll: false });
+    },
+    [router],
+  );
 
   const load = useCallback(async (p: number, kw: string) => {
     setLoading(true);
