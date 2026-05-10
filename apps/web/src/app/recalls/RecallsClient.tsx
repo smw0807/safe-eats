@@ -2,23 +2,34 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
 import type { Recall, RecallsResponse } from '../../types';
 
 interface Props {
   initialData: RecallsResponse;
+  initialKeyword: string;
 }
 
 const LIMIT = 20;
 
-export default function RecallsClient({ initialData }: Props) {
+export default function RecallsClient({ initialData, initialKeyword }: Props) {
+  const router = useRouter();
   const [recalls, setRecalls] = useState<Recall[]>(initialData.recalls);
   const [total, setTotal] = useState(initialData.total);
   const [totalPages, setTotalPages] = useState(initialData.totalPages);
   const [page, setPage] = useState(initialData.page);
-  const [keyword, setKeyword] = useState('');
-  const [search, setSearch] = useState('');
+  const [keyword, setKeyword] = useState(initialKeyword);
+  const [search, setSearch] = useState(initialKeyword);
   const [loading, setLoading] = useState(false);
+
+  const updateUrl = useCallback((p: number, kw: string) => {
+    const params = new URLSearchParams();
+    if (p > 1) params.set('page', String(p));
+    if (kw) params.set('keyword', kw);
+    const query = params.toString();
+    router.replace(`/recalls${query ? `?${query}` : ''}`, { scroll: false });
+  }, [router]);
 
   const load = useCallback(async (p: number, kw: string) => {
     setLoading(true);
@@ -41,11 +52,13 @@ export default function RecallsClient({ initialData }: Props) {
     e.preventDefault();
     setPage(1);
     setSearch(keyword);
+    updateUrl(1, keyword);
     load(1, keyword);
   };
 
   const handlePageChange = (p: number) => {
     setPage(p);
+    updateUrl(p, search);
     load(p, search);
   };
 
@@ -53,6 +66,7 @@ export default function RecallsClient({ initialData }: Props) {
     setKeyword('');
     setSearch('');
     setPage(1);
+    updateUrl(1, '');
     load(1, '');
   };
 
