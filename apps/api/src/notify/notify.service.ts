@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import * as webpush from 'web-push';
+import * as nodemailer from 'nodemailer';
 import { prisma } from '@safe-eats/database';
 import { RecallNotifyEvent } from '@safe-eats/dto';
 import { UpdateNotificationSettingDto } from './dto/update-notification-setting.dto';
@@ -92,6 +93,32 @@ export class NotifyService implements OnModuleInit {
     }
 
     return { success: true, count: successCount };
+  }
+
+  async sendTestEmail(userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.email) throw new NotFoundException('사용자 이메일을 찾을 수 없습니다.');
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+
+    await transporter.sendMail({
+      from: `"SafeEats 알림" <${process.env.SMTP_USER}>`,
+      to: user.email,
+      subject: '[SafeEats] 테스트 이메일',
+      html: `
+        <h2>이메일 알림 테스트</h2>
+        <p>SafeEats 이메일 알림이 정상적으로 작동합니다.</p>
+        <p>실제 리콜 발생 시 이와 같은 형식으로 알림이 발송됩니다.</p>
+        <hr>
+        <p style="color:#666;font-size:12px">SafeEats - 식품 안전 리콜 모니터링 서비스</p>
+      `,
+    });
+
+    this.logger.log(`[EMAIL TEST] 발송 완료: ${user.email}`);
+    return { success: true, to: user.email };
   }
 
   async publishRecallEvents(events: RecallNotifyEvent[]) {

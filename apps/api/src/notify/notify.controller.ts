@@ -40,4 +40,11 @@ export class NotifyController {
   sendTestPush(@CurrentUser() user: { id: string }) {
     return this.notifyService.sendTestPush(user.id);
   }
+
+  @Post('email/test')
+  @HttpCode(200)
+  @ApiOperation({ summary: '이메일 테스트 발송' })
+  sendTestEmail(@CurrentUser() user: { id: string }) {
+    return this.notifyService.sendTestEmail(user.id);
+  }
 }

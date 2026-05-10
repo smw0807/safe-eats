@@ -31,6 +31,9 @@ export default function NotificationSettingsPage() {
   const [testMessage, setTestMessage] = useState('');
   const [testOk, setTestOk] = useState<boolean | null>(null);
   const [subCount, setSubCount] = useState<number | null>(null);
+  const [emailTestSending, setEmailTestSending] = useState(false);
+  const [emailTestMessage, setEmailTestMessage] = useState('');
+  const [emailTestOk, setEmailTestOk] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -143,6 +146,24 @@ export default function NotificationSettingsPage() {
     } finally {
       setTestSending(false);
       setTimeout(() => setTestOk(null), 6000);
+    }
+  };
+
+  const sendTestEmail = async () => {
+    if (!token) return;
+    setEmailTestSending(true);
+    setEmailTestMessage('');
+    setEmailTestOk(null);
+    try {
+      const res = await api.post<{ to: string }>('/email/test', {}, token);
+      setEmailTestOk(true);
+      setEmailTestMessage(`${res.to} 로 발송됐습니다.`);
+    } catch (err) {
+      setEmailTestOk(false);
+      setEmailTestMessage(err instanceof Error ? err.message : '발송 실패');
+    } finally {
+      setEmailTestSending(false);
+      setTimeout(() => setEmailTestOk(null), 6000);
     }
   };
 
@@ -274,6 +295,29 @@ export default function NotificationSettingsPage() {
               구독 정보가 없습니다. 웹 푸시 알림을 OFF 후 다시 ON 해주세요.
             </p>
           )}
+        </div>
+      )}
+
+      {/* 이메일 테스트 */}
+      {settings.emailEnabled && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
+          <h2 className="font-semibold mb-1 text-sm">이메일 테스트</h2>
+          <p className="text-xs text-gray-400 mb-3">가입한 이메일로 테스트 알림을 발송합니다.</p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={sendTestEmail}
+              disabled={emailTestSending}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium transition"
+            >
+              {emailTestSending ? '발송 중...' : '테스트 이메일 보내기'}
+            </button>
+            {emailTestOk === true && (
+              <span className="text-sm text-green-600">{emailTestMessage}</span>
+            )}
+            {emailTestOk === false && (
+              <span className="text-sm text-red-500">{emailTestMessage}</span>
+            )}
+          </div>
         </div>
       )}
 
