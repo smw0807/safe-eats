@@ -30,7 +30,7 @@ interface FindAllOptions {
   keyword?: string;
 }
 
-interface FindAllResult {
+export interface FindAllResult {
   recalls: Recall[];
   total: number;
   page: number;
