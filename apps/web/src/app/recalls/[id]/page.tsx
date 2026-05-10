@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import SubscriptionBanner from './SubscriptionBanner';
+import ImageGallery from './ImageGallery';
 import type { Recall } from '../../../types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -90,23 +90,7 @@ export default async function RecallDetailPage({ params }: { params: Promise<{ i
 
         {/* 제품 이미지 */}
         {recall.imageUrls && recall.imageUrls.length > 0 && (
-          <div className="px-6 pt-6 flex gap-3 overflow-x-auto">
-            {recall.imageUrls.map((url, i) => (
-              <div
-                key={i}
-                className="shrink-0 w-32 h-32 rounded-lg border border-gray-200 overflow-hidden bg-gray-50"
-              >
-                <Image
-                  src={url}
-                  alt={`${recall.productName} 이미지 ${i + 1}`}
-                  width={128}
-                  height={128}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
-              </div>
-            ))}
-          </div>
+          <ImageGallery imageUrls={recall.imageUrls} productName={recall.productName} />
         )}
 
         {/* 상세 정보 */}
