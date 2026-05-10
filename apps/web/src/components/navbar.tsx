@@ -27,9 +27,6 @@ export default function Navbar() {
           <Link href="/recalls" className={isActive('/recalls')}>
             리콜 목록
           </Link>
-          <Link href="/nutrition" className={isActive('/nutrition')}>
-            영양성분
-          </Link>
           {user ? (
             <>
               <Link href="/dashboard" className={isActive('/dashboard')}>
