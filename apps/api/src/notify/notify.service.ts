@@ -95,6 +95,15 @@ export class NotifyService implements OnModuleInit {
     return { success: true, count: successCount };
   }
 
+  async findAllNotifiableUsers() {
+    return prisma.notificationSetting.findMany({
+      where: {
+        OR: [{ emailEnabled: true }, { pushEnabled: true }, { kakaoEnabled: true }],
+      },
+      include: { user: true },
+    });
+  }
+
   async sendTestEmail(userId: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user?.email) throw new NotFoundException('사용자 이메일을 찾을 수 없습니다.');

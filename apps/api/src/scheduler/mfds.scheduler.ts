@@ -3,7 +3,6 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { Recall } from '@safe-eats/database';
 import { v4 as uuidv4 } from 'uuid';
 import { RecallService } from '../recall/recall.service';
-import { SubscribeService } from '../subscribe/subscribe.service';
 import { NotifyService } from '../notify/notify.service';
 import { MfdsApiService } from './mfds-api.service';
 
@@ -13,7 +12,6 @@ export class MfdsScheduler {
 
   constructor(
     private readonly recallService: RecallService,
-    private readonly subscribeService: SubscribeService,
     private readonly notifyService: NotifyService,
     private readonly mfdsApiService: MfdsApiService,
   ) {}
@@ -48,43 +46,40 @@ export class MfdsScheduler {
         this.logger.warn(`[POLL] 저장 실패: ${(r as PromiseRejectedResult).reason}`),
       );
 
+      if (newRecalls.length === 0) return;
+
+      const notifiableUsers = await this.notifyService.findAllNotifiableUsers();
+      this.logger.log(`[POLL] 알림 대상 사용자: ${notifiableUsers.length}명`);
+
+      if (notifiableUsers.length === 0) return;
+
       let totalNotified = 0;
       for (const recall of newRecalls) {
-        const subs = await this.subscribeService.findMatchingUsers(
-          recall.productName,
-          recall.company,
-        );
+        const events = notifiableUsers.map((setting) => {
+          const channels: ('email' | 'push' | 'kakao')[] = [];
+          if (setting.emailEnabled) channels.push('email');
+          if (setting.pushEnabled) channels.push('push');
+          if (setting.kakaoEnabled) channels.push('kakao');
 
-        const events = subs
-          .filter((s) => s.user.notificationSettings)
-          .map((s) => {
-            const settings = s.user.notificationSettings!;
-            const channels: ('email' | 'push' | 'kakao')[] = [];
-            if (settings.emailEnabled) channels.push('email');
-            if (settings.pushEnabled) channels.push('push');
-            if (settings.kakaoEnabled) channels.push('kakao');
+          return {
+            eventId: uuidv4(),
+            userId: setting.userId,
+            channels,
+            recall: {
+              id: recall.id,
+              productName: recall.productName,
+              company: recall.company,
+              reason: recall.reason,
+              announcedAt: recall.announcedAt.toISOString(),
+              sourceUrl: recall.sourceUrl,
+            },
+            retryCount: 0,
+          };
+        });
 
-            return {
-              eventId: uuidv4(),
-              userId: s.userId,
-              channels,
-              recall: {
-                id: recall.id,
-                productName: recall.productName,
-                company: recall.company,
-                reason: recall.reason,
-                announcedAt: recall.announcedAt.toISOString(),
-                sourceUrl: recall.sourceUrl,
-              },
-              retryCount: 0,
-            };
-          });
-
-        if (events.length > 0) {
-          await this.notifyService.publishRecallEvents(events);
-          this.logger.log(`[POLL] "${recall.productName}" — 알림 발행 ${events.length}명`);
-          totalNotified += events.length;
-        }
+        await this.notifyService.publishRecallEvents(events);
+        this.logger.log(`[POLL] "${recall.productName}" — 알림 발행 ${events.length}명`);
+        totalNotified += events.length;
       }
 
       const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
