@@ -6,6 +6,18 @@ import { api } from '../../../lib/api';
 import Alert from '../../../components/ui/Alert';
 import type { NotificationSettings } from '../../../types';
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const buffer = new ArrayBuffer(rawData.length);
+  const outputArray = new Uint8Array(buffer);
+  for (let i = 0; i < rawData.length; i++) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
 export default function NotificationSettingsPage() {
   const { token, user, isLoading } = useRequireAuth();
 
@@ -40,15 +52,15 @@ export default function NotificationSettingsPage() {
       throw new Error('알림 권한이 거부되었습니다. 브라우저 설정에서 허용해 주세요.');
     }
 
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    await navigator.serviceWorker.ready;
+    await navigator.serviceWorker.register('/sw.js');
+    const registration = await navigator.serviceWorker.ready;
 
     const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
     if (!vapidKey) throw new Error('VAPID 키가 설정되지 않았습니다.');
 
     const sub = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: vapidKey,
+      applicationServerKey: urlBase64ToUint8Array(vapidKey),
     });
 
     const subJson = sub.toJSON();
