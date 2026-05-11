@@ -32,9 +32,6 @@ export default function Navbar() {
               <Link href="/dashboard" className={isActive('/dashboard')}>
                 대시보드
               </Link>
-              <Link href="/subscribe" className={isActive('/subscribe')}>
-                구독 관리
-              </Link>
               <Link href="/settings/notifications" className={isActive('/settings/notifications')}>
                 알림 설정
               </Link>

@@ -29,13 +29,6 @@ export interface RecallsResponse {
   totalPages: number;
 }
 
-export interface Subscription {
-  id: string;
-  keyword: string;
-  type: 'PRODUCT' | 'BRAND';
-  createdAt: string;
-}
-
 export interface NotificationSettings {
   id?: string;
   emailEnabled: boolean;

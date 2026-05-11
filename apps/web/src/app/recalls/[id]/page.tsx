@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import SubscriptionBanner from './SubscriptionBanner';
 import ImageGallery from './ImageGallery';
 import type { Recall } from '../../../types';
 
@@ -50,8 +49,6 @@ export default async function RecallDetailPage({ params }: { params: Promise<{ i
       >
         ← 목록으로
       </Link>
-
-      <SubscriptionBanner productName={recall.productName} company={recall.company} />
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* 헤더 */}

@@ -4,13 +4,12 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRequireAuth } from '../../hooks/useRequireAuth';
 import { api } from '../../lib/api';
-import type { Recall, Subscription, NotificationSettings } from '../../types';
+import type { Recall, NotificationSettings } from '../../types';
 
 export default function DashboardPage() {
   const { token, user, isLoading } = useRequireAuth();
 
   const [recalls, setRecalls] = useState<Recall[]>([]);
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [settings, setSettings] = useState<NotificationSettings | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -19,13 +18,11 @@ export default function DashboardPage() {
 
     const load = async () => {
       try {
-        const [recallsRes, subsRes, settingsRes] = await Promise.all([
+        const [recallsRes, settingsRes] = await Promise.all([
           api.get<{ recalls: Recall[] }>('/recalls?limit=3'),
-          api.get<Subscription[]>('/subscriptions', token),
           api.get<NotificationSettings>('/notifications/settings', token),
         ]);
         setRecalls(recallsRes.recalls);
-        setSubscriptions(subsRes);
         setSettings(settingsRes);
       } catch {
         // ignore load errors
@@ -63,14 +60,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 요약 카드 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <p className="text-sm text-gray-500 mb-1">구독 키워드</p>
-          <p className="text-3xl font-bold text-green-600">{subscriptions.length}</p>
-          <Link href="/subscribe" className="text-xs text-green-600 hover:underline mt-1 block">
-            관리하기 →
-          </Link>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
         <div className="bg-white rounded-xl border border-gray-200 p-5">
           <p className="text-sm text-gray-500 mb-1">활성 알림 채널</p>
           <p className="text-3xl font-bold text-blue-600">{activeChannels.length}</p>
@@ -113,38 +103,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-      {/* 내 구독 키워드 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold">내 구독 키워드</h2>
-          <Link href="/subscribe" className="text-sm text-green-600 hover:underline">
-            + 추가
-          </Link>
-        </div>
-        {subscriptions.length === 0 ? (
-          <p className="text-gray-400 text-sm">
-            아직 구독 키워드가 없습니다.{' '}
-            <Link href="/subscribe" className="text-green-600 hover:underline">
-              등록하러 가기
-            </Link>
-          </p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {subscriptions.map((sub) => (
-              <span
-                key={sub.id}
-                className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-700"
-              >
-                {sub.keyword}
-                <span className="ml-1 text-xs text-gray-400">
-                  {sub.type === 'PRODUCT' ? '식품' : '브랜드'}
-                </span>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* 최신 리콜 */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">

@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './auth/auth.module';
 import { RecallModule } from './recall/recall.module';
-import { SubscribeModule } from './subscribe/subscribe.module';
 import { NotifyModule } from './notify/notify.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { AdminModule } from './admin/admin.module';
@@ -17,7 +16,6 @@ import { AdminModule } from './admin/admin.module';
     ScheduleModule.forRoot(),
     AuthModule,
     RecallModule,
-    SubscribeModule,
     NotifyModule,
     SchedulerModule,
     AdminModule,
