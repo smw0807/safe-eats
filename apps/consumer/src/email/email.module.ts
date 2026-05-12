@@ -3,6 +3,7 @@ import { EmailConsumer } from './email.consumer';
 import { EmailService } from './email.service';
 
 @Module({
-  providers: [EmailConsumer, EmailService],
+  controllers: [EmailConsumer],
+  providers: [EmailService],
 })
 export class EmailModule {}

@@ -3,6 +3,7 @@ import { KakaoConsumer } from './kakao.consumer';
 import { KakaoService } from './kakao.service';
 
 @Module({
-  providers: [KakaoConsumer, KakaoService],
+  controllers: [KakaoConsumer],
+  providers: [KakaoService],
 })
 export class KakaoModule {}

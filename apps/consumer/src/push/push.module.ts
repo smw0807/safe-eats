@@ -3,6 +3,7 @@ import { PushConsumer } from './push.consumer';
 import { PushService } from './push.service';
 
 @Module({
-  providers: [PushConsumer, PushService],
+  controllers: [PushConsumer],
+  providers: [PushService],
 })
 export class PushModule {}
