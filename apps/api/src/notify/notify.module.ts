@@ -13,7 +13,10 @@ import { NotifyService } from './notify.service';
           options: {
             urls: [process.env.RABBITMQ_URL || 'amqp://guest:guest@localhost:5672'],
             queue: 'recall.email.queue',
-            queueOptions: { durable: true },
+            queueOptions: {
+              durable: true,
+              arguments: { 'x-dead-letter-exchange': 'dlx.exchange' },
+            },
             exchange: 'recall.exchange',
             exchangeType: 'direct',
           },
